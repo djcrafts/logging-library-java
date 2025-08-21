@@ -6,6 +6,7 @@ package logger.formatter;
 
 
 import logger.model.LogRecord;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -44,6 +45,9 @@ public class DefaultFormatter implements Formatter {
         result = result.replace("%id%", record.getId() != null ? record.getId() : "");
         result = result.replace("%message%", record.getMessage());
         result = result.replace("%params%", record.getParams() != null ? record.getParams().toString() : "");
+        if (record.getAlertMarker() != null) {
+            result += " [ALERT: " + record.getAlertMarker().type() + "]";
+        }
         return result;
     }
 }

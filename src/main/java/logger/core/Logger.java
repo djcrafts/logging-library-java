@@ -8,6 +8,7 @@ package logger.core;
 
 import logger.handler.Handler;
 import logger.model.LogRecord;
+import logger.model.AlertMarker;
 // ...existing code...
 import java.util.Map;
 
@@ -96,12 +97,19 @@ public class Logger {
      * @param params Optional custom parameters
      */
     private void log(LogLevel level, String message, String id, Map<String, Object> params) {
+        log(level, message, id, params, null);
+    }
+
+    /**
+     * Log a message at the given level, with optional id, parameters, and alert marker.
+     */
+    private void log(LogLevel level, String message, String id, Map<String, Object> params, AlertMarker alertMarker) {
         if (level.ordinal() < this.level.ordinal()) {
             return;
         }
         String useId = (id != null) ? id : defaultId;
         Map<String, Object> useParams = (params != null && !params.isEmpty()) ? params : defaultParams;
-        LogRecord record = new LogRecord(level, message, useId, useParams);
+        LogRecord record = new LogRecord(level, message, useId, useParams, alertMarker);
         synchronized (handlers) {
             for (Handler handler : handlers) {
                 if (level.ordinal() >= handler.getLevel().ordinal()) {
@@ -115,7 +123,7 @@ public class Logger {
      * Log a message at the given level (no id/params).
      */
     private void log(LogLevel level, String message) {
-        log(level, message, null, null);
+        log(level, message, null, null, null);
     }
 
     /**
@@ -148,5 +156,13 @@ public class Logger {
      */
     public void error(String message) {
         log(LogLevel.ERROR, message);
+    }
+
+    /**
+     * Log an alert message. Handlers can process alerts differently.
+     * @param message Message to log
+     */
+    public void alert(String message) {
+        log(LogLevel.ERROR, message, null, null, new AlertMarker("ALERT"));
     }
 }

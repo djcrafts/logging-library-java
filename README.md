@@ -22,7 +22,29 @@ public class MyApp {
 		logger.debug("Debug message");
 		logger.warn("Warning message");
 		logger.error("Error message");
+		// Alert logging
+		logger.alert("Critical alert: service down!");
 	}
+}
+```
+
+## Alert Logging & Extensibility
+You can log alerts using `logger.alert("message")`. Alerts are flagged in the log output and can be handled by custom handlers (e.g., send to CloudWatch, Prometheus, email, etc.).
+
+To handle alerts differently, implement your own `Handler` and check for `LogRecord.getAlertMarker() != null`.
+
+Example:
+```java
+public class CloudWatchAlertHandler implements Handler {
+	// ...
+	public void publish(LogRecord record) {
+		if (record.getAlertMarker() != null) {
+			// Send to CloudWatch
+		} else {
+			// Regular log handling
+		}
+	}
+	// ...
 }
 ```
 
