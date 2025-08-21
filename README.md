@@ -11,19 +11,40 @@ A simple, extensible Java logging library for console and file output. Supports 
 
 ## Usage Example
 ```java
-Logger logger = new Logger("MyAppLogger");
-ConsoleHandler consoleHandler = new ConsoleHandler();
-consoleHandler.setLevel(LogLevel.INFO);
-FileHandler fileHandler = new FileHandler("application.log");
-fileHandler.setLevel(LogLevel.DEBUG);
-logger.addHandler(consoleHandler);
-logger.addHandler(fileHandler);
-logger.setLevel(LogLevel.DEBUG);
-logger.debug("Debug message");
-logger.info("Info message");
-logger.warn("Warning message");
-logger.error("Error message");
+import logger.core.Logger;
+import logger.core.LoggerFactory;
+
+public class MyApp {
+	private static final Logger logger = LoggerFactory.getLogger(MyApp.class);
+
+	public static void main(String[] args) {
+		logger.info("Application started");
+		logger.debug("Debug message");
+		logger.warn("Warning message");
+		logger.error("Error message");
+	}
+}
 ```
+
+
+## Custom Parameters & Configurable Format
+You can now log with custom parameters and an optional id:
+
+```java
+Map<String, Object> params = new HashMap<>();
+params.put("userId", "12345");
+params.put("action", "login");
+logger.info("User logged in", "event-001", params);
+```
+
+### Logging Config File (future extension)
+You can add a `logging.properties` file in `src/main/resources` to specify the log format and other options. Example stub:
+
+```
+# logging.properties
+log.format=[%timestamp%] [%thread%] [%level%] [id:%id%]: [%message%] Params: %params%
+```
+Custom format support can be added by implementing your own `Formatter` and reading config in your handler/formatter classes.
 
 ## Extending
 - **Formatter**: Implement the `Formatter` interface to customize log output format.
@@ -34,6 +55,3 @@ logger.error("Error message");
 - `handler/`: Output handlers (console, file)
 - `formatter/`: Formatters for log messages
 - `model/`: Log record data structure
-
-## License
-MIT

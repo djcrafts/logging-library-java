@@ -4,13 +4,31 @@
  */
 package logger.formatter;
 
+
 import logger.model.LogRecord;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 
 /**
  * Formats log records as [timestamp] [thread] [level]: [message]
  */
 public class DefaultFormatter implements Formatter {
+    private String format = "[%timestamp%] [%thread%] [%level%] [id:%id%]: [%message%] Params: %params%";
+
+    public DefaultFormatter() {
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream("logging.properties")) {
+            if (in != null) {
+                Properties props = new Properties();
+                props.load(in);
+                String fmt = props.getProperty("log.format");
+                if (fmt != null && !fmt.isEmpty()) {
+                    format = fmt;
+                }
+            }
+        } catch (IOException ignored) {}
+    }
 
     /**
      * Format a log record using the default format.
@@ -19,10 +37,13 @@ public class DefaultFormatter implements Formatter {
      */
     @Override
     public String format(LogRecord record) {
-        return String.format("[%s] [%s] [%s]: [%s]",
-                record.getTimestamp(),
-                record.getThreadName(),
-                record.getLevel(),
-                record.getMessage());
+        String result = format;
+        result = result.replace("%timestamp%", String.valueOf(record.getTimestamp()));
+        result = result.replace("%thread%", record.getThreadName());
+        result = result.replace("%level%", String.valueOf(record.getLevel()));
+        result = result.replace("%id%", record.getId() != null ? record.getId() : "");
+        result = result.replace("%message%", record.getMessage());
+        result = result.replace("%params%", record.getParams() != null ? record.getParams().toString() : "");
+        return result;
     }
 }

@@ -8,6 +8,8 @@ package logger.core;
 
 import logger.handler.Handler;
 import logger.model.LogRecord;
+// ...existing code...
+import java.util.Map;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +18,8 @@ import java.util.List;
 /**
  * Logger for logging messages with handlers and levels.
  */
+import java.util.HashMap;
+
 public class Logger {
 
     /** Name of the logger instance. */
@@ -24,6 +28,10 @@ public class Logger {
     private final List<Handler> handlers = new ArrayList<>();
     /** Minimum log level for this logger. */
     private LogLevel level = LogLevel.DEBUG;
+    /** Default id for all log records (optional). */
+    private String defaultId = null;
+    /** Default parameters for all log records (optional). */
+    private Map<String, Object> defaultParams = new HashMap<>();
 
     /**
      * Create a new Logger with the given name.
@@ -31,29 +39,47 @@ public class Logger {
      */
     public Logger(String name) {
         this.name = name;
+        // Load defaults from logging.properties
+        try (java.io.InputStream in = getClass().getClassLoader().getResourceAsStream("logging.properties")) {
+            if (in != null) {
+                java.util.Properties props = new java.util.Properties();
+                props.load(in);
+                String id = props.getProperty("default.id");
+                if (id != null && !id.isEmpty()) {
+                    this.defaultId = id;
+                }
+                Map<String, Object> params = new HashMap<>();
+                for (String key : props.stringPropertyNames()) {
+                    if (key.startsWith("default.param.")) {
+                        String paramKey = key.substring("default.param.".length());
+                        params.put(paramKey, props.getProperty(key));
+                    }
+                }
+                if (!params.isEmpty()) {
+                    this.defaultParams = params;
+                }
+            }
+        } catch (Exception ignored) {}
     }
 
     /**
-     * Add a handler to this logger.
-     * @param handler Handler to add
+     * Add a handler to this logger (internal use).
      */
-    public void addHandler(Handler handler) {
+    void addHandler(Handler handler) {
         handlers.add(handler);
     }
 
     /**
-     * Set the minimum log level for this logger.
-     * @param level LogLevel to set
+     * Set the minimum log level for this logger (internal use).
      */
-    public void setLevel(LogLevel level) {
+    void setLevel(LogLevel level) {
         this.level = level;
     }
 
     /**
-     * Get the current log level for this logger.
-     * @return LogLevel
+     * Get the current log level for this logger (internal use).
      */
-    public LogLevel getLevel() {
+    LogLevel getLevel() {
         return level;
     }
 
@@ -62,11 +88,20 @@ public class Logger {
      * @param level LogLevel
      * @param message Message to log
      */
-    private void log(LogLevel level, String message) {
+    /**
+     * Log a message at the given level, with optional id and parameters.
+     * @param level LogLevel
+     * @param message Message to log
+     * @param id Optional id for the log record
+     * @param params Optional custom parameters
+     */
+    private void log(LogLevel level, String message, String id, Map<String, Object> params) {
         if (level.ordinal() < this.level.ordinal()) {
             return;
         }
-        LogRecord record = new LogRecord(level, message);
+        String useId = (id != null) ? id : defaultId;
+        Map<String, Object> useParams = (params != null && !params.isEmpty()) ? params : defaultParams;
+        LogRecord record = new LogRecord(level, message, useId, useParams);
         synchronized (handlers) {
             for (Handler handler : handlers) {
                 if (level.ordinal() >= handler.getLevel().ordinal()) {
@@ -74,6 +109,13 @@ public class Logger {
                 }
             }
         }
+    }
+
+    /**
+     * Log a message at the given level (no id/params).
+     */
+    private void log(LogLevel level, String message) {
+        log(level, message, null, null);
     }
 
     /**

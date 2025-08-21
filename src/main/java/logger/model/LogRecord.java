@@ -13,6 +13,11 @@ import java.time.LocalDateTime;
 /**
  * Data structure for a log event, including timestamp, level, message, and thread.
  */
+import java.util.Map;
+
+/**
+ * Data structure for a log event, including timestamp, level, message, thread, and custom parameters.
+ */
 public class LogRecord {
     /** Timestamp when the log record was created. */
     private final LocalDateTime timestamp;
@@ -22,17 +27,25 @@ public class LogRecord {
     private final String message;
     /** Name of the thread that created the log record. */
     private final String threadName;
+    /** Optional id for the log record. */
+    private final String id;
+    /** Optional custom parameters for the log record. */
+    private final Map<String, Object> params;
 
     /**
-     * Create a new LogRecord with the given level and message.
+     * Create a new LogRecord with the given level, message, id, and parameters.
      * @param level LogLevel
      * @param message Log message
+     * @param id Optional id for the log record
+     * @param params Optional custom parameters
      */
-    public LogRecord(LogLevel level, String message) {
+    public LogRecord(LogLevel level, String message, String id, Map<String, Object> params) {
         this.timestamp = LocalDateTime.now();
         this.level = level;
         this.message = message;
         this.threadName = Thread.currentThread().getName();
+        this.id = id;
+        this.params = params;
     }
 
     /**
@@ -58,4 +71,16 @@ public class LogRecord {
      * @return String
      */
     public String getThreadName() { return threadName; }
+
+    /**
+     * Get the id of the log record.
+     * @return String
+     */
+    public String getId() { return id; }
+
+    /**
+     * Get custom parameters for the log record.
+     * @return Map of parameters
+     */
+    public Map<String, Object> getParams() { return params; }
 }
